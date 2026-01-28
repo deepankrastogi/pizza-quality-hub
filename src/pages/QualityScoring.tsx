@@ -23,6 +23,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import { ImageZoomDialog } from "@/components/ImageZoomDialog";
 
 // Mock data
 const mockPizza = {
@@ -63,6 +64,7 @@ export default function QualityScoring() {
   const [selectedDefect, setSelectedDefect] = useState<string>("burnt");
   const [annotations, setAnnotations] = useState<any[]>([]);
   const [zoom, setZoom] = useState(100);
+  const [zoomDialogOpen, setZoomDialogOpen] = useState(false);
 
   const overallScore = Object.values(scores).reduce((sum, score) => sum + score, 0) / 6;
 
@@ -148,13 +150,21 @@ export default function QualityScoring() {
                     <img
                       src={mockPizza.url}
                       alt="Pizza to score"
-                      className="h-full w-full object-cover cursor-crosshair"
+                      className="h-full w-full object-cover cursor-zoom-in"
+                      onClick={() => setZoomDialogOpen(true)}
                     />
                   </AspectRatio>
                 </div>
               </div>
             </CardContent>
           </Card>
+
+          <ImageZoomDialog
+            open={zoomDialogOpen}
+            onOpenChange={setZoomDialogOpen}
+            imageUrl={mockPizza.url}
+            alt="Pizza to score"
+          />
 
           {/* Annotation Toolbar */}
           <Card>

@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ImageZoomDialog } from "@/components/ImageZoomDialog";
 
 // Mock data for model predictions
 const mockPredictions = [
@@ -33,6 +34,7 @@ export default function ReClassification() {
   const [confirmed, setConfirmed] = useState(0);
   const [corrected, setCorrected] = useState(0);
   const [filter, setFilter] = useState<string>("all");
+  const [zoomOpen, setZoomOpen] = useState(false);
 
   const filteredPredictions = mockPredictions.filter((pred) => {
     if (filter === "low") return pred.confidence < 0.7;
@@ -148,11 +150,19 @@ export default function ReClassification() {
               <img
                 src={currentImage.url}
                 alt="Image to review"
-                className="h-full w-full object-cover"
+                className="h-full w-full object-cover cursor-zoom-in"
+                onClick={() => setZoomOpen(true)}
               />
             </AspectRatio>
           </CardContent>
         </Card>
+
+        <ImageZoomDialog
+          open={zoomOpen}
+          onOpenChange={setZoomOpen}
+          imageUrl={currentImage.url}
+          alt="Image to review"
+        />
 
         {/* Review Panel */}
         <div className="space-y-4">

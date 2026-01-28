@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Pizza, UtensilsCrossed, SkipForward, Keyboard } from "lucide-react";
+import { Pizza, UtensilsCrossed, SkipForward, Keyboard, ChevronDown } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -13,6 +13,38 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  SelectGroup,
+  SelectLabel,
+} from "@/components/ui/select";
+import { ImageZoomDialog } from "@/components/ImageZoomDialog";
+
+// Pizza and Side item types
+const pizzaTypes = [
+  "Peppy Paneer",
+  "Farmhouse",
+  "Margherita",
+  "Pepperoni",
+  "Mexican Green Wave",
+  "Chicken Dominator",
+  "Non Veg Supreme",
+  "Veg Extravaganza",
+];
+
+const sideTypes = [
+  "Garlic Bread",
+  "Stuffed Garlic Bread",
+  "Chicken Wings",
+  "Taco Mexicana",
+  "Pasta Italiano",
+  "Cheese Dip",
+  "Veg Parcel",
+];
 
 // Mock data for unclassified images
 const mockImages = [
@@ -27,31 +59,35 @@ export default function Classification() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [classified, setClassified] = useState(0);
   const [skipped, setSkipped] = useState(0);
+  const [selectedItemType, setSelectedItemType] = useState<string>("");
+  const [zoomOpen, setZoomOpen] = useState(false);
   
   const currentImage = mockImages[currentIndex % mockImages.length];
   const totalImages = mockImages.length;
   const progress = ((classified + skipped) / totalImages) * 100;
 
-  const handleClassify = (type: "pizza" | "side") => {
+  const handleClassify = () => {
+    if (!selectedItemType) return;
     setClassified((prev) => prev + 1);
     setCurrentIndex((prev) => prev + 1);
+    setSelectedItemType("");
   };
 
   const handleSkip = () => {
     setSkipped((prev) => prev + 1);
     setCurrentIndex((prev) => prev + 1);
+    setSelectedItemType("");
   };
 
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key.toLowerCase() === "p") {
-        handleClassify("pizza");
-      } else if (e.key.toLowerCase() === "s") {
-        handleClassify("side");
-      } else if (e.key === " " || e.key === "ArrowRight") {
+      if (e.key === " " || e.key === "ArrowRight") {
         e.preventDefault();
         handleSkip();
+      } else if (e.key === "Enter" && selectedItemType) {
+        e.preventDefault();
+        handleClassify();
       }
     };
 
@@ -83,12 +119,8 @@ export default function Classification() {
             </DialogHeader>
             <div className="space-y-3 pt-4">
               <div className="flex items-center justify-between rounded-lg bg-secondary p-3">
-                <span>Classify as Pizza</span>
-                <Badge>P</Badge>
-              </div>
-              <div className="flex items-center justify-between rounded-lg bg-secondary p-3">
-                <span>Classify as Side</span>
-                <Badge>S</Badge>
+                <span>Confirm Selection</span>
+                <Badge>Enter</Badge>
               </div>
               <div className="flex items-center justify-between rounded-lg bg-secondary p-3">
                 <span>Skip Image</span>
@@ -129,43 +161,76 @@ export default function Classification() {
               <img
                 src={currentImage.url}
                 alt="Image to classify"
-                className="h-full w-full object-cover transition-opacity"
+                className="h-full w-full object-cover transition-opacity cursor-zoom-in"
+                onClick={() => setZoomOpen(true)}
               />
             </AspectRatio>
           </CardContent>
         </Card>
+
+        <ImageZoomDialog
+          open={zoomOpen}
+          onOpenChange={setZoomOpen}
+          imageUrl={currentImage.url}
+          alt="Image to classify"
+        />
 
         {/* Controls Panel */}
         <div className="space-y-4">
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-lg">Classification</CardTitle>
-              <CardDescription>What type of item is this?</CardDescription>
+              <CardDescription>Select the item type from the dropdown</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-4">
+              <Select value={selectedItemType} onValueChange={setSelectedItemType}>
+                <SelectTrigger className="h-14 text-lg">
+                  <SelectValue placeholder="Select item type..." />
+                </SelectTrigger>
+                <SelectContent className="max-h-80">
+                  <SelectGroup>
+                    <SelectLabel className="flex items-center gap-2">
+                      <Pizza className="h-4 w-4" />
+                      Pizzas
+                    </SelectLabel>
+                    {pizzaTypes.map((type) => (
+                      <SelectItem key={type} value={`pizza:${type}`}>
+                        {type}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                  <SelectGroup>
+                    <SelectLabel className="flex items-center gap-2">
+                      <UtensilsCrossed className="h-4 w-4" />
+                      Side Items
+                    </SelectLabel>
+                    {sideTypes.map((type) => (
+                      <SelectItem key={type} value={`side:${type}`}>
+                        {type}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+
               <Button
-                onClick={() => handleClassify("pizza")}
-                className="h-20 w-full text-lg"
+                onClick={handleClassify}
+                className="h-14 w-full text-lg"
                 size="lg"
+                disabled={!selectedItemType}
               >
-                <Pizza className="mr-3 h-8 w-8" />
-                Pizza
-                <Badge variant="secondary" className="ml-auto">
-                  P
-                </Badge>
+                {selectedItemType ? (
+                  <>
+                    Classify as {selectedItemType.split(":")[1]}
+                    <Badge variant="secondary" className="ml-auto">
+                      Enter
+                    </Badge>
+                  </>
+                ) : (
+                  "Select item type to classify"
+                )}
               </Button>
-              <Button
-                onClick={() => handleClassify("side")}
-                variant="secondary"
-                className="h-20 w-full text-lg"
-                size="lg"
-              >
-                <UtensilsCrossed className="mr-3 h-8 w-8" />
-                Side Item
-                <Badge variant="outline" className="ml-auto">
-                  S
-                </Badge>
-              </Button>
+
               <Button
                 onClick={handleSkip}
                 variant="outline"

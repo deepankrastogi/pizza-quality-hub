@@ -39,6 +39,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { ImageZoomDialog } from "@/components/ImageZoomDialog";
 
 // Mock data
 const mockImages = [
@@ -58,6 +59,7 @@ export default function BrowseImages() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [scoreFilter, setScoreFilter] = useState("all");
   const [selectedImage, setSelectedImage] = useState<typeof mockImages[0] | null>(null);
+  const [zoomImage, setZoomImage] = useState<string | null>(null);
 
   const getScoreColor = (score: number | null) => {
     if (score === null) return "bg-muted text-muted-foreground";
@@ -214,7 +216,11 @@ export default function BrowseImages() {
                     <img
                       src={image.url}
                       alt={`Pizza ${image.id}`}
-                      className="h-full w-full rounded-lg object-cover"
+                      className="h-full w-full rounded-lg object-cover cursor-zoom-in"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setZoomImage(image.url);
+                      }}
                     />
                   </AspectRatio>
                   <div className="space-y-4">
@@ -273,7 +279,10 @@ export default function BrowseImages() {
                   key={image.id}
                   className="flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors cursor-pointer"
                 >
-                  <div className="h-16 w-16 overflow-hidden rounded-lg">
+                  <div 
+                    className="h-16 w-16 overflow-hidden rounded-lg cursor-zoom-in"
+                    onClick={() => setZoomImage(image.url)}
+                  >
                     <img
                       src={image.url}
                       alt={`Pizza ${image.id}`}
@@ -296,6 +305,13 @@ export default function BrowseImages() {
           </CardContent>
         </Card>
       )}
+
+      <ImageZoomDialog
+        open={!!zoomImage}
+        onOpenChange={(open) => !open && setZoomImage(null)}
+        imageUrl={zoomImage || ""}
+        alt="Pizza image"
+      />
     </div>
   );
 }

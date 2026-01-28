@@ -59,24 +59,32 @@ export default function Classification() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [classified, setClassified] = useState(0);
   const [skipped, setSkipped] = useState(0);
-  const [selectedItemType, setSelectedItemType] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<"pizza" | "side" | null>(null);
+  const [selectedItemName, setSelectedItemName] = useState<string>("");
   const [zoomOpen, setZoomOpen] = useState(false);
   
   const currentImage = mockImages[currentIndex % mockImages.length];
   const totalImages = mockImages.length;
   const progress = ((classified + skipped) / totalImages) * 100;
 
+  const handleSelectCategory = (category: "pizza" | "side") => {
+    setSelectedCategory(category);
+    setSelectedItemName("");
+  };
+
   const handleClassify = () => {
-    if (!selectedItemType) return;
+    if (!selectedCategory || !selectedItemName) return;
     setClassified((prev) => prev + 1);
     setCurrentIndex((prev) => prev + 1);
-    setSelectedItemType("");
+    setSelectedCategory(null);
+    setSelectedItemName("");
   };
 
   const handleSkip = () => {
     setSkipped((prev) => prev + 1);
     setCurrentIndex((prev) => prev + 1);
-    setSelectedItemType("");
+    setSelectedCategory(null);
+    setSelectedItemName("");
   };
 
   // Keyboard shortcuts
@@ -85,9 +93,16 @@ export default function Classification() {
       if (e.key === " " || e.key === "ArrowRight") {
         e.preventDefault();
         handleSkip();
-      } else if (e.key === "Enter" && selectedItemType) {
+      } else if (e.key === "Enter" && selectedCategory && selectedItemName) {
         e.preventDefault();
         handleClassify();
+      } else if (e.key.toLowerCase() === "p" && !selectedCategory) {
+        handleSelectCategory("pizza");
+      } else if (e.key.toLowerCase() === "s" && !selectedCategory) {
+        handleSelectCategory("side");
+      } else if (e.key === "Escape" && selectedCategory) {
+        setSelectedCategory(null);
+        setSelectedItemName("");
       }
     };
 
@@ -119,8 +134,20 @@ export default function Classification() {
             </DialogHeader>
             <div className="space-y-3 pt-4">
               <div className="flex items-center justify-between rounded-lg bg-secondary p-3">
+                <span>Select Pizza</span>
+                <Badge>P</Badge>
+              </div>
+              <div className="flex items-center justify-between rounded-lg bg-secondary p-3">
+                <span>Select Side</span>
+                <Badge>S</Badge>
+              </div>
+              <div className="flex items-center justify-between rounded-lg bg-secondary p-3">
                 <span>Confirm Selection</span>
                 <Badge>Enter</Badge>
+              </div>
+              <div className="flex items-center justify-between rounded-lg bg-secondary p-3">
+                <span>Go Back</span>
+                <Badge>Esc</Badge>
               </div>
               <div className="flex items-center justify-between rounded-lg bg-secondary p-3">
                 <span>Skip Image</span>
@@ -180,56 +207,97 @@ export default function Classification() {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-lg">Classification</CardTitle>
-              <CardDescription>Select the item type from the dropdown</CardDescription>
+              <CardDescription>
+                {!selectedCategory 
+                  ? "Step 1: Select category" 
+                  : "Step 2: Select item name"}
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Select value={selectedItemType} onValueChange={setSelectedItemType}>
-                <SelectTrigger className="h-14 text-lg">
-                  <SelectValue placeholder="Select item type..." />
-                </SelectTrigger>
-                <SelectContent className="max-h-80">
-                  <SelectGroup>
-                    <SelectLabel className="flex items-center gap-2">
-                      <Pizza className="h-4 w-4" />
-                      Pizzas
-                    </SelectLabel>
-                    {pizzaTypes.map((type) => (
-                      <SelectItem key={type} value={`pizza:${type}`}>
-                        {type}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                  <SelectGroup>
-                    <SelectLabel className="flex items-center gap-2">
-                      <UtensilsCrossed className="h-4 w-4" />
-                      Side Items
-                    </SelectLabel>
-                    {sideTypes.map((type) => (
-                      <SelectItem key={type} value={`side:${type}`}>
-                        {type}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-
-              <Button
-                onClick={handleClassify}
-                className="h-14 w-full text-lg"
-                size="lg"
-                disabled={!selectedItemType}
-              >
-                {selectedItemType ? (
-                  <>
-                    Classify as {selectedItemType.split(":")[1]}
+              {/* Step 1: Category Selection */}
+              {!selectedCategory ? (
+                <>
+                  <Button
+                    onClick={() => handleSelectCategory("pizza")}
+                    className="h-16 w-full text-lg"
+                    size="lg"
+                  >
+                    <Pizza className="mr-3 h-7 w-7" />
+                    Pizza
                     <Badge variant="secondary" className="ml-auto">
-                      Enter
+                      P
                     </Badge>
-                  </>
-                ) : (
-                  "Select item type to classify"
-                )}
-              </Button>
+                  </Button>
+                  <Button
+                    onClick={() => handleSelectCategory("side")}
+                    variant="secondary"
+                    className="h-16 w-full text-lg"
+                    size="lg"
+                  >
+                    <UtensilsCrossed className="mr-3 h-7 w-7" />
+                    Side Item
+                    <Badge variant="outline" className="ml-auto">
+                      S
+                    </Badge>
+                  </Button>
+                </>
+              ) : (
+                <>
+                  {/* Selected Category Badge */}
+                  <div className="flex items-center justify-between rounded-lg bg-secondary p-3">
+                    <div className="flex items-center gap-2">
+                      {selectedCategory === "pizza" ? (
+                        <Pizza className="h-5 w-5" />
+                      ) : (
+                        <UtensilsCrossed className="h-5 w-5" />
+                      )}
+                      <span className="font-medium capitalize">{selectedCategory}</span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedCategory(null);
+                        setSelectedItemName("");
+                      }}
+                    >
+                      Change
+                    </Button>
+                  </div>
+
+                  {/* Step 2: Item Name Dropdown */}
+                  <Select value={selectedItemName} onValueChange={setSelectedItemName}>
+                    <SelectTrigger className="h-14 text-lg">
+                      <SelectValue placeholder={`Select ${selectedCategory} type...`} />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-80">
+                      {(selectedCategory === "pizza" ? pizzaTypes : sideTypes).map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {type}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <Button
+                    onClick={handleClassify}
+                    className="h-14 w-full text-lg"
+                    size="lg"
+                    disabled={!selectedItemName}
+                  >
+                    {selectedItemName ? (
+                      <>
+                        Classify as {selectedItemName}
+                        <Badge variant="secondary" className="ml-auto">
+                          Enter
+                        </Badge>
+                      </>
+                    ) : (
+                      "Select item name to classify"
+                    )}
+                  </Button>
+                </>
+              )}
 
               <Button
                 onClick={handleSkip}

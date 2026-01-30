@@ -158,26 +158,15 @@ export default function Classification() {
         </Dialog>
       </div>
 
-      {/* Progress Bar */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Session Progress</span>
-            <div className="flex items-center gap-4">
-              <Badge variant="secondary" className="bg-success/10 text-success">
-                {classified} classified
-              </Badge>
-              <Badge variant="secondary" className="bg-warning/10 text-warning">
-                {skipped} skipped
-              </Badge>
-              <span className="font-medium">
-                {classified + skipped} / {totalImages}
-              </span>
-            </div>
-          </div>
-          <Progress value={progress} className="mt-2 h-2" />
-        </CardContent>
-      </Card>
+      {/* Session Counts */}
+      <div className="flex items-center gap-4">
+        <Badge variant="secondary" className="bg-success/10 text-success px-3 py-1">
+          {classified} classified
+        </Badge>
+        <Badge variant="secondary" className="bg-warning/10 text-warning px-3 py-1">
+          {skipped} skipped
+        </Badge>
+      </div>
 
       {/* Main Classification Area */}
       <div className="grid gap-6 lg:grid-cols-[1fr_300px]">

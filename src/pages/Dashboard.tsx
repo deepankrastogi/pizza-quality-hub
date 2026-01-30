@@ -51,20 +51,12 @@ const stats = [
 
 const workflowCards = [
   {
-    title: "Manual Classification",
+    title: "Classify Images",
     description: "Classify untagged images as Pizza or Side",
     icon: Tags,
     link: "/classify",
     pending: 156,
     color: "border-accent",
-  },
-  {
-    title: "Re-Classification Review",
-    description: "Correct model predictions that need human review",
-    icon: RefreshCw,
-    link: "/reclassify",
-    pending: 42,
-    color: "border-warning",
   },
   {
     title: "Quality Scoring",
@@ -73,6 +65,14 @@ const workflowCards = [
     link: "/scoring",
     pending: 89,
     color: "border-primary",
+  },
+  {
+    title: "Review Model Scores",
+    description: "Correct model predictions that need human review",
+    icon: RefreshCw,
+    link: "/reclassify",
+    pending: 42,
+    color: "border-warning",
   },
 ];
 

@@ -271,65 +271,6 @@ export default function QualityScoring() {
 
         {/* Scoring Panel */}
         <div className="space-y-4">
-          {/* Overall Score */}
-          <Card className={cn("border-2", getScoreBg(overallScore).replace("bg-", "border-"))}>
-            <CardContent className="p-6 text-center">
-              <p className="text-sm text-muted-foreground mb-1">Overall Quality Score</p>
-              <p className={cn("text-5xl font-bold", getScoreColor(overallScore))}>
-                {overallScore.toFixed(0)}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">out of 100</p>
-              <div className="mt-4 h-3 w-full rounded-full bg-secondary overflow-hidden">
-                <div
-                  className={cn("h-full transition-all", getScoreBg(overallScore))}
-                  style={{ width: `${overallScore}%` }}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Parameter Scores */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Scoring Parameters</CardTitle>
-              <CardDescription>Rate each parameter from 0-10 (10 = best)</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {scoringParameters.map((param) => (
-                <div key={param.key} className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label className="font-medium">{param.label}</Label>
-                      <p className="text-xs text-muted-foreground">{param.description}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Input
-                        type="number"
-                        min={0}
-                        max={10}
-                        value={scores[param.key]}
-                        onChange={(e) =>
-                          setScores((prev) => ({
-                            ...prev,
-                            [param.key]: Math.max(0, Math.min(10, parseInt(e.target.value) || 0)),
-                          }))
-                        }
-                        className="w-16 text-center"
-                      />
-                    </div>
-                  </div>
-                  <Slider
-                    value={[scores[param.key]]}
-                    onValueChange={(v) => handleScoreChange(param.key, v)}
-                    max={10}
-                    step={1}
-                    className="w-full"
-                  />
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-
           {/* Item Classification */}
           <Card>
             <CardHeader className="pb-3">
@@ -407,6 +348,65 @@ export default function QualityScoring() {
                   </div>
                 </div>
               )}
+            </CardContent>
+          </Card>
+
+          {/* Overall Score */}
+          <Card className={cn("border-2", getScoreBg(overallScore).replace("bg-", "border-"))}>
+            <CardContent className="p-6 text-center">
+              <p className="text-sm text-muted-foreground mb-1">Overall Quality Score</p>
+              <p className={cn("text-5xl font-bold", getScoreColor(overallScore))}>
+                {overallScore.toFixed(0)}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">out of 100</p>
+              <div className="mt-4 h-3 w-full rounded-full bg-secondary overflow-hidden">
+                <div
+                  className={cn("h-full transition-all", getScoreBg(overallScore))}
+                  style={{ width: `${overallScore}%` }}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Parameter Scores */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">Scoring Parameters</CardTitle>
+              <CardDescription>Rate each parameter from 0-10 (10 = best)</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {scoringParameters.map((param) => (
+                <div key={param.key} className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="font-medium">{param.label}</Label>
+                      <p className="text-xs text-muted-foreground">{param.description}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        min={0}
+                        max={10}
+                        value={scores[param.key]}
+                        onChange={(e) =>
+                          setScores((prev) => ({
+                            ...prev,
+                            [param.key]: Math.max(0, Math.min(10, parseInt(e.target.value) || 0)),
+                          }))
+                        }
+                        className="w-16 text-center"
+                      />
+                    </div>
+                  </div>
+                  <Slider
+                    value={[scores[param.key]]}
+                    onValueChange={(v) => handleScoreChange(param.key, v)}
+                    max={10}
+                    step={1}
+                    className="w-full"
+                  />
+                </div>
+              ))}
             </CardContent>
           </Card>
 

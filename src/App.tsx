@@ -8,6 +8,7 @@ import Dashboard from "./pages/Dashboard";
 import Classification from "./pages/Classification";
 import ReClassification from "./pages/ReClassification";
 import QualityScoring from "./pages/QualityScoring";
+import UploadRate from "./pages/UploadRate";
 import BrowseImages from "./pages/BrowseImages";
 import QualityAnalytics from "./pages/QualityAnalytics";
 import TrainingAnalytics from "./pages/TrainingAnalytics";
@@ -28,6 +29,14 @@ const App = () => (
             element={
               <AppLayout>
                 <Dashboard />
+              </AppLayout>
+            }
+          />
+          <Route
+            path="/upload"
+            element={
+              <AppLayout>
+                <UploadRate />
               </AppLayout>
             }
           />

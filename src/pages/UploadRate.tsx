@@ -5,7 +5,7 @@ import {
   Edit2,
   ChevronDown,
   ChevronUp,
-  Eye,
+  Save,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -74,7 +74,7 @@ function simulatePrediction(isPizzaScoring: boolean): UploadedImage["prediction"
   return { isPizza, category, productName, confidence, scores };
 }
 
-export function ImageUploadSection() {
+export default function UploadRate() {
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [enableScoring, setEnableScoring] = useState(false);
@@ -180,13 +180,16 @@ export function ImageUploadSection() {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle>Upload Images</CardTitle>
-            <CardDescription>Upload photos for model prediction</CardDescription>
-          </div>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Upload & Rate</h1>
+          <p className="mt-1 text-muted-foreground">
+            Upload photos for model prediction and quality scoring
+          </p>
+        </div>
+        <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <Label htmlFor="scoring-toggle" className="text-sm text-muted-foreground">
               Include Scoring
@@ -197,9 +200,21 @@ export function ImageUploadSection() {
               onCheckedChange={setEnableScoring}
             />
           </div>
+          {uploadedImages.length > 0 && (
+            <Button onClick={() => console.log("Submitting:", uploadedImages)}>
+              <Save className="mr-2 h-4 w-4" />
+              Submit All ({uploadedImages.length})
+            </Button>
+          )}
         </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Upload Images</CardTitle>
+          <CardDescription>Drag & drop or click to upload single or batch photos</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
         {/* Drop Zone */}
         <div
           onDrop={handleDrop}
@@ -421,14 +436,10 @@ export function ImageUploadSection() {
               ))}
             </div>
 
-            {/* Submit Button */}
-            <Button className="w-full">
-              <Eye className="mr-2 h-4 w-4" />
-              Submit All ({uploadedImages.length})
-            </Button>
           </div>
         )}
       </CardContent>
     </Card>
+    </div>
   );
 }

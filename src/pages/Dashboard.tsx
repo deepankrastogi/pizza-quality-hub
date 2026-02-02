@@ -7,13 +7,13 @@ import {
   Clock,
   AlertTriangle,
   ArrowRight,
+  Upload,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { ImageUploadSection } from "@/components/dashboard/ImageUploadSection";
 
 const stats = [
   {
@@ -51,6 +51,14 @@ const stats = [
 ];
 
 const workflowCards = [
+  {
+    title: "Upload & Rate",
+    description: "Upload photos for model prediction and scoring",
+    icon: Upload,
+    link: "/upload",
+    pending: null,
+    color: "border-success",
+  },
   {
     title: "Classify Images",
     description: "Classify untagged images as Pizza or Side",
@@ -143,11 +151,8 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* Image Upload Section */}
-      <ImageUploadSection />
-
       {/* Workflow Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {workflowCards.map((card) => (
           <Card
             key={card.title}
@@ -166,9 +171,15 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
-                <Badge variant="secondary" className="text-sm">
-                  {card.pending} pending
-                </Badge>
+                {card.pending !== null ? (
+                  <Badge variant="secondary" className="text-sm">
+                    {card.pending} pending
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="text-sm">
+                    New uploads
+                  </Badge>
+                )}
                 <Button variant="ghost" size="sm" asChild>
                   <Link to={card.link} className="flex items-center gap-1">
                     Start <ArrowRight className="h-4 w-4" />

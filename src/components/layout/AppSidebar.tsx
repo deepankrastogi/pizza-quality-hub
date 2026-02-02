@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -13,6 +12,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Pizza,
+  Upload,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import {
@@ -36,6 +36,7 @@ const mainNavItems = [
 ];
 
 const workflowItems = [
+  { title: "Upload & Rate", url: "/upload", icon: Upload },
   { title: "Classify Images", url: "/classify", icon: Tags },
   { title: "Quality Scoring", url: "/scoring", icon: Star },
   { title: "Review Model Scores", url: "/reclassify", icon: RefreshCw },

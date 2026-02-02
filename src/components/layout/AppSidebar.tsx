@@ -36,9 +36,9 @@ const mainNavItems = [
 ];
 
 const workflowItems = [
-  { title: "Classification", url: "/classify", icon: Tags },
-  { title: "Re-Classification", url: "/reclassify", icon: RefreshCw },
+  { title: "Classify Images", url: "/classify", icon: Tags },
   { title: "Quality Scoring", url: "/scoring", icon: Star },
+  { title: "Review Model Scores", url: "/reclassify", icon: RefreshCw },
   { title: "Browse Images", url: "/browse", icon: FolderOpen },
 ];
 

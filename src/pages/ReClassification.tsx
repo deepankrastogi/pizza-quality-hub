@@ -4,7 +4,6 @@ import {
   X,
   AlertTriangle,
   Filter,
-  ChevronDown,
   ZoomIn,
   ZoomOut,
   RotateCcw,
@@ -15,21 +14,17 @@ import {
   Redo,
   Trash2,
   SkipForward,
-  Save,
+  Edit3,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { Slider } from "@/components/ui/slider";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
@@ -41,13 +36,17 @@ import { ImageZoomDialog } from "@/components/ImageZoomDialog";
 import { AnnotationCanvas, type Annotation } from "@/components/AnnotationCanvas";
 import { cn } from "@/lib/utils";
 
+// Product options
+const pizzaOptions = ["Pepperoni", "Margherita", "Supreme", "BBQ Chicken", "Veggie", "Hawaiian", "Meat Lovers"];
+const sideOptions = ["Garlic Bread", "Wings", "Cheese Sticks", "Salad", "Breadsticks", "Onion Rings"];
+
 // Mock data for model predictions
 const mockPredictions = [
-  { id: "1", url: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600", prediction: "pizza", confidence: 0.94, storeId: "1234", timestamp: "2024-01-15 10:23:45", type: "Pepperoni" },
-  { id: "2", url: "https://images.unsplash.com/photo-1528137871618-79d2761e3fd5?w=600", prediction: "side", confidence: 0.67, storeId: "1235", timestamp: "2024-01-15 10:25:12", type: "Garlic Bread" },
-  { id: "3", url: "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=600", prediction: "pizza", confidence: 0.82, storeId: "1236", timestamp: "2024-01-15 10:27:33", type: "Margherita" },
-  { id: "4", url: "https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?w=600", prediction: "pizza", confidence: 0.51, storeId: "1237", timestamp: "2024-01-15 10:30:45", type: "Supreme" },
-  { id: "5", url: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=600", prediction: "side", confidence: 0.73, storeId: "1238", timestamp: "2024-01-15 10:32:18", type: "Wings" },
+  { id: "1", url: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600", category: "pizza", productName: "Pepperoni", confidence: 0.94, storeId: "1234", timestamp: "2024-01-15 10:23:45" },
+  { id: "2", url: "https://images.unsplash.com/photo-1528137871618-79d2761e3fd5?w=600", category: "side", productName: "Garlic Bread", confidence: 0.67, storeId: "1235", timestamp: "2024-01-15 10:25:12" },
+  { id: "3", url: "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=600", category: "pizza", productName: "Margherita", confidence: 0.82, storeId: "1236", timestamp: "2024-01-15 10:27:33" },
+  { id: "4", url: "https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?w=600", category: "pizza", productName: "Supreme", confidence: 0.51, storeId: "1237", timestamp: "2024-01-15 10:30:45" },
+  { id: "5", url: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=600", category: "side", productName: "Wings", confidence: 0.73, storeId: "1238", timestamp: "2024-01-15 10:32:18" },
 ];
 
 const defectTypes = [
@@ -56,6 +55,15 @@ const defectTypes = [
   { id: "missing_topping", label: "Missing Topping", color: "bg-accent" },
   { id: "uneven_cheese", label: "Uneven Cheese", color: "bg-primary" },
   { id: "bubble_defect", label: "Bubble Defect", color: "bg-muted-foreground" },
+];
+
+const scoringParameters = [
+  { key: "toppingSpread", label: "Topping Spread", description: "Distribution evenness of toppings" },
+  { key: "cheeseSpread", label: "Cheese Spread", description: "Coverage and distribution of cheese" },
+  { key: "burnScore", label: "Burn Score", description: "Level of desired browning (higher = better)" },
+  { key: "undercookedScore", label: "Undercooked Score", description: "Degree of proper cooking (higher = better)" },
+  { key: "bubbleCount", label: "Bubble Count", description: "Number of crust bubbles" },
+  { key: "bubbleSize", label: "Bubble Size", description: "Consistency of bubble sizes" },
 ];
 
 export default function ReClassification() {
@@ -71,6 +79,19 @@ export default function ReClassification() {
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [zoom, setZoom] = useState(100);
 
+  // Edit mode state
+  const [isEditing, setIsEditing] = useState(false);
+  const [editCategory, setEditCategory] = useState<"pizza" | "side">("pizza");
+  const [editProductName, setEditProductName] = useState("");
+  const [scores, setScores] = useState<Record<string, number>>({
+    toppingSpread: 7,
+    cheeseSpread: 8,
+    burnScore: 8,
+    undercookedScore: 9,
+    bubbleCount: 7,
+    bubbleSize: 6,
+  });
+
   const filteredPredictions = mockPredictions.filter((pred) => {
     if (filter === "low") return pred.confidence < 0.7;
     if (filter === "medium") return pred.confidence >= 0.7 && pred.confidence < 0.9;
@@ -81,21 +102,45 @@ export default function ReClassification() {
   const currentImage = filteredPredictions[currentIndex % filteredPredictions.length];
   const total = filteredPredictions.length;
 
+  const resetEditState = () => {
+    setIsEditing(false);
+    setAnnotations([]);
+    setScores({
+      toppingSpread: 7,
+      cheeseSpread: 8,
+      burnScore: 8,
+      undercookedScore: 9,
+      bubbleCount: 7,
+      bubbleSize: 6,
+    });
+  };
+
   const handleConfirm = () => {
     setConfirmed((prev) => prev + 1);
     setCurrentIndex((prev) => prev + 1);
-    setAnnotations([]); // Clear annotations for next image
+    resetEditState();
   };
 
-  const handleCorrect = (newType: string) => {
+  const handleStartEdit = () => {
+    setIsEditing(true);
+    setEditCategory(currentImage.category as "pizza" | "side");
+    setEditProductName(currentImage.productName);
+  };
+
+  const handleSaveCorrection = () => {
     setCorrected((prev) => prev + 1);
     setCurrentIndex((prev) => prev + 1);
-    setAnnotations([]); // Clear annotations for next image
+    resetEditState();
+    console.log("Saved correction:", { editCategory, editProductName, scores, annotations });
+  };
+
+  const handleCancelEdit = () => {
+    resetEditState();
   };
 
   const handleSkip = () => {
     setCurrentIndex((prev) => prev + 1);
-    setAnnotations([]);
+    resetEditState();
   };
 
   const getConfidenceColor = (confidence: number) => {
@@ -121,6 +166,26 @@ export default function ReClassification() {
   const getDefectColor = (defectId: string) => {
     return defectTypes.find((d) => d.id === defectId)?.color || "bg-muted";
   };
+
+  const handleScoreChange = (key: string, value: number[]) => {
+    setScores((prev) => ({ ...prev, [key]: value[0] }));
+  };
+
+  const overallScore = (Object.values(scores).reduce((sum, score) => sum + score, 0) / 6) * 10;
+
+  const getScoreColor = (score: number) => {
+    if (score >= 80) return "text-success";
+    if (score >= 60) return "text-warning";
+    return "text-destructive";
+  };
+
+  const getScoreBg = (score: number) => {
+    if (score >= 80) return "bg-success";
+    if (score >= 60) return "bg-warning";
+    return "bg-destructive";
+  };
+
+  const productOptions = editCategory === "pizza" ? pizzaOptions : sideOptions;
 
   if (!currentImage) {
     return (
@@ -338,9 +403,19 @@ export default function ReClassification() {
               <CardTitle className="text-lg">Model Prediction</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-center">
-                <p className="text-3xl font-bold capitalize">{currentImage.prediction}</p>
-                <div className="mt-2 flex items-center justify-center gap-2">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Category</span>
+                  <Badge variant="secondary" className="text-base capitalize">
+                    {currentImage.category}
+                  </Badge>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Product Name</span>
+                  <span className="font-semibold">{currentImage.productName}</span>
+                </div>
+                <Separator />
+                <div className="flex items-center justify-center gap-2">
                   <span className="text-muted-foreground">Confidence:</span>
                   <Badge className={getConfidenceBadge(currentImage.confidence)}>
                     {(currentImage.confidence * 100).toFixed(1)}%
@@ -348,54 +423,176 @@ export default function ReClassification() {
                 </div>
                 <Progress
                   value={currentImage.confidence * 100}
-                  className="mt-4 h-3"
+                  className="h-3"
                 />
               </div>
             </CardContent>
           </Card>
 
-          {/* Actions */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Your Decision</CardTitle>
-              <CardDescription>Is the model's prediction correct?</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Button
-                onClick={handleConfirm}
-                className="h-14 w-full text-lg bg-success hover:bg-success/90"
-                size="lg"
-              >
-                <Check className="mr-2 h-6 w-6" />
-                Confirm Prediction
-              </Button>
+          {/* Actions / Edit Mode */}
+          {!isEditing ? (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">Your Decision</CardTitle>
+                <CardDescription>Is the model's prediction correct?</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Button
+                  onClick={handleConfirm}
+                  className="h-14 w-full text-lg bg-success hover:bg-success/90"
+                  size="lg"
+                >
+                  <Check className="mr-2 h-6 w-6" />
+                  Confirm Prediction
+                </Button>
 
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="h-14 w-full text-lg border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                    size="lg"
-                  >
-                    <X className="mr-2 h-6 w-6" />
-                    Correct Prediction
-                    <ChevronDown className="ml-auto h-5 w-5" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56">
-                  <DropdownMenuItem onClick={() => handleCorrect("pizza")}>
-                    Actually a Pizza
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleCorrect("side")}>
-                    Actually a Side Item
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleCorrect("unclear")}>
-                    Unclear / Bad Image
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </CardContent>
-          </Card>
+                <Button
+                  variant="outline"
+                  onClick={handleStartEdit}
+                  className="h-14 w-full text-lg border-warning text-warning hover:bg-warning hover:text-warning-foreground"
+                  size="lg"
+                >
+                  <Edit3 className="mr-2 h-6 w-6" />
+                  Make Corrections
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              {/* Edit Classification */}
+              <Card className="border-2 border-warning">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg">Correct Classification</CardTitle>
+                  <CardDescription>Update category and product name</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Category</Label>
+                    <div className="flex gap-2">
+                      <Button
+                        variant={editCategory === "pizza" ? "default" : "outline"}
+                        className="flex-1"
+                        onClick={() => {
+                          setEditCategory("pizza");
+                          setEditProductName(pizzaOptions[0]);
+                        }}
+                      >
+                        Pizza
+                      </Button>
+                      <Button
+                        variant={editCategory === "side" ? "default" : "outline"}
+                        className="flex-1"
+                        onClick={() => {
+                          setEditCategory("side");
+                          setEditProductName(sideOptions[0]);
+                        }}
+                      >
+                        Side
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Product Name</Label>
+                    <Select value={editProductName} onValueChange={setEditProductName}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select product" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {productOptions.map((option) => (
+                          <SelectItem key={option} value={option}>
+                            {option}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Scoring Parameters */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-lg">Quality Scoring</CardTitle>
+                      <CardDescription>Rate each parameter from 0-10</CardDescription>
+                    </div>
+                    <div className={cn("text-2xl font-bold", getScoreColor(overallScore))}>
+                      {overallScore.toFixed(0)}/100
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-5">
+                  {scoringParameters.map((param) => (
+                    <div key={param.key} className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <Label className="font-medium text-sm">{param.label}</Label>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="number"
+                            min={0}
+                            max={10}
+                            value={scores[param.key]}
+                            onChange={(e) =>
+                              setScores((prev) => ({
+                                ...prev,
+                                [param.key]: Math.max(0, Math.min(10, parseInt(e.target.value) || 0)),
+                              }))
+                            }
+                            className="w-14 h-8 text-center text-sm"
+                          />
+                        </div>
+                      </div>
+                      <Slider
+                        value={[scores[param.key]]}
+                        onValueChange={(v) => handleScoreChange(param.key, v)}
+                        max={10}
+                        step={1}
+                        className="w-full"
+                      />
+                    </div>
+                  ))}
+
+                  {/* Overall Score Bar */}
+                  <div className="pt-3 border-t">
+                    <div className="flex items-center justify-between mb-2">
+                      <Label className="text-sm text-muted-foreground">Overall Score</Label>
+                      <span className={cn("font-bold", getScoreColor(overallScore))}>
+                        {overallScore.toFixed(0)}%
+                      </span>
+                    </div>
+                    <div className="h-3 w-full rounded-full bg-secondary overflow-hidden">
+                      <div
+                        className={cn("h-full transition-all", getScoreBg(overallScore))}
+                        style={{ width: `${overallScore}%` }}
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Save/Cancel Actions */}
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  onClick={handleCancelEdit}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSaveCorrection}
+                  className="flex-1 bg-warning hover:bg-warning/90 text-warning-foreground"
+                >
+                  <Check className="mr-2 h-4 w-4" />
+                  Save Correction
+                </Button>
+              </div>
+            </>
+          )}
 
           {/* Image Details */}
           <Card>
@@ -410,10 +607,6 @@ export default function ReClassification() {
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Store</span>
                 <span>#{currentImage.storeId}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Type</span>
-                <span>{currentImage.type}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Captured</span>

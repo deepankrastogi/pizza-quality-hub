@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { ImageUploadSection } from "@/components/dashboard/ImageUploadSection";
 
 const stats = [
   {
@@ -141,6 +142,9 @@ export default function Dashboard() {
           </Card>
         ))}
       </div>
+
+      {/* Image Upload Section */}
+      <ImageUploadSection />
 
       {/* Workflow Cards */}
       <div className="grid gap-4 md:grid-cols-3">

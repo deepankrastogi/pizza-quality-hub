@@ -181,7 +181,7 @@ export default function Dashboard() {
         <Card>
           <CardHeader>
             <CardTitle>Today's Progress</CardTitle>
-            <CardDescription>Your team's classification targets</CardDescription>
+            <CardDescription>Your progress</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div>
@@ -235,7 +235,7 @@ export default function Dashboard() {
                   <div className="flex-1">
                     <p className="text-sm font-medium">{activity.action}</p>
                     <p className="text-xs text-muted-foreground">
-                      {activity.user} • {activity.time}
+                      {activity.time}
                     </p>
                   </div>
                 </div>

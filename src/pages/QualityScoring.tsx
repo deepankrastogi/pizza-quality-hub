@@ -17,14 +17,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
-import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { ImageZoomDialog } from "@/components/ImageZoomDialog";
+import { AnnotationCanvas, type Annotation } from "@/components/AnnotationCanvas";
 
 // Mock data
 const mockPizza = {
@@ -53,7 +52,7 @@ const defectTypes = [
 ];
 
 export default function QualityScoring() {
-const [scores, setScores] = useState<Record<string, number>>({
+  const [scores, setScores] = useState<Record<string, number>>({
     toppingSpread: 7,
     cheeseSpread: 8,
     burnScore: 8,
@@ -61,33 +60,25 @@ const [scores, setScores] = useState<Record<string, number>>({
     bubbleCount: 7,
     bubbleSize: 6,
   });
-  const [selectedTool, setSelectedTool] = useState<string>("box");
+  const [selectedTool, setSelectedTool] = useState<"box" | "polygon" | "point">("box");
   const [selectedDefect, setSelectedDefect] = useState<string>("burnt");
-  const [annotations, setAnnotations] = useState<{ id: string; defectType: string; tool: string }[]>([]);
+  const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [zoom, setZoom] = useState(100);
   const [zoomDialogOpen, setZoomDialogOpen] = useState(false);
 
-  const overallScore = Object.values(scores).reduce((sum, score) => sum + score, 0) / 6;
+  // Overall score out of 100 (average of 6 params each out of 10, multiplied by 10)
+  const overallScore = (Object.values(scores).reduce((sum, score) => sum + score, 0) / 6) * 10;
 
   const getScoreColor = (score: number) => {
-    if (score >= 8) return "text-success";
-    if (score >= 6) return "text-warning";
+    if (score >= 80) return "text-success";
+    if (score >= 60) return "text-warning";
     return "text-destructive";
   };
 
   const getScoreBg = (score: number) => {
-    if (score >= 8) return "bg-success";
-    if (score >= 6) return "bg-warning";
+    if (score >= 80) return "bg-success";
+    if (score >= 60) return "bg-warning";
     return "bg-destructive";
-  };
-
-  const addAnnotation = () => {
-    const newAnnotation = {
-      id: Date.now().toString(),
-      defectType: selectedDefect,
-      tool: selectedTool,
-    };
-    setAnnotations((prev) => [...prev, newAnnotation]);
   };
 
   const removeAnnotation = (id: string) => {
@@ -166,24 +157,16 @@ const [scores, setScores] = useState<Record<string, number>>({
               </div>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="overflow-auto" style={{ maxHeight: "60vh" }}>
-                <div style={{ transform: `scale(${zoom / 100})`, transformOrigin: "top left" }}>
-                  <AspectRatio ratio={4 / 3}>
-                    <img
-                      src={mockPizza.url}
-                      alt="Pizza to score"
-                      className="h-full w-full object-cover cursor-crosshair"
-                      onClick={(e) => {
-                        if (e.shiftKey) {
-                          setZoomDialogOpen(true);
-                        } else {
-                          addAnnotation();
-                        }
-                      }}
-                    />
-                  </AspectRatio>
-                </div>
-              </div>
+              <AnnotationCanvas
+                imageUrl={mockPizza.url}
+                selectedTool={selectedTool}
+                selectedDefect={selectedDefect}
+                defectColor={getDefectColor(selectedDefect)}
+                annotations={annotations}
+                onAnnotationsChange={setAnnotations}
+                zoom={zoom}
+                onZoomClick={() => setZoomDialogOpen(true)}
+              />
             </CardContent>
           </Card>
 
@@ -204,7 +187,7 @@ const [scores, setScores] = useState<Record<string, number>>({
               <div className="flex flex-wrap items-center gap-4">
                 <div>
                   <Label className="text-xs text-muted-foreground mb-2 block">Tool</Label>
-                  <ToggleGroup type="single" value={selectedTool} onValueChange={(v) => v && setSelectedTool(v)}>
+                  <ToggleGroup type="single" value={selectedTool} onValueChange={(v) => v && setSelectedTool(v as "box" | "polygon" | "point")}>
                     <ToggleGroupItem value="box" aria-label="Bounding Box">
                       <Square className="h-4 w-4 mr-2" />
                       Box
@@ -281,13 +264,13 @@ const [scores, setScores] = useState<Record<string, number>>({
             <CardContent className="p-6 text-center">
               <p className="text-sm text-muted-foreground mb-1">Overall Quality Score</p>
               <p className={cn("text-5xl font-bold", getScoreColor(overallScore))}>
-                {overallScore.toFixed(1)}
+                {overallScore.toFixed(0)}
               </p>
-              <p className="text-xs text-muted-foreground mt-1">out of 10</p>
+              <p className="text-xs text-muted-foreground mt-1">out of 100</p>
               <div className="mt-4 h-3 w-full rounded-full bg-secondary overflow-hidden">
                 <div
                   className={cn("h-full transition-all", getScoreBg(overallScore))}
-                  style={{ width: `${(overallScore / 10) * 100}%` }}
+                  style={{ width: `${overallScore}%` }}
                 />
               </div>
             </CardContent>

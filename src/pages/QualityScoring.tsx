@@ -12,6 +12,7 @@ import {
   Redo,
   Trash2,
   X,
+  Edit2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,9 +22,14 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Separator } from "@/components/ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { ImageZoomDialog } from "@/components/ImageZoomDialog";
 import { AnnotationCanvas, type Annotation } from "@/components/AnnotationCanvas";
+
+// Product options
+const pizzaOptions = ["Pepperoni", "Margherita", "BBQ Chicken", "Hawaiian", "Veggie Supreme", "Meat Lovers", "Buffalo Chicken", "Four Cheese"];
+const sideOptions = ["Garlic Bread", "Chicken Wings", "Mozzarella Sticks", "Breadsticks", "Caesar Salad", "Onion Rings", "Jalapeño Poppers"];
 
 // Mock data
 const mockPizza = {
@@ -31,7 +37,8 @@ const mockPizza = {
   url: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800",
   storeId: "1234",
   timestamp: "2024-01-15 10:23:45",
-  type: "Pepperoni",
+  category: "Pizza" as "Pizza" | "Side",
+  productName: "Pepperoni",
 };
 
 const scoringParameters = [
@@ -65,6 +72,11 @@ export default function QualityScoring() {
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [zoom, setZoom] = useState(100);
   const [zoomDialogOpen, setZoomDialogOpen] = useState(false);
+  
+  // Category and product name state
+  const [category, setCategory] = useState<"Pizza" | "Side">(mockPizza.category);
+  const [productName, setProductName] = useState(mockPizza.productName);
+  const [isEditingItem, setIsEditingItem] = useState(false);
 
   // Overall score out of 100 (average of 6 params each out of 10, multiplied by 10)
   const overallScore = (Object.values(scores).reduce((sum, score) => sum + score, 0) / 6) * 10;
@@ -318,6 +330,86 @@ export default function QualityScoring() {
             </CardContent>
           </Card>
 
+          {/* Item Classification */}
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg">Item Classification</CardTitle>
+                {!isEditingItem && (
+                  <Button variant="ghost" size="sm" onClick={() => setIsEditingItem(true)}>
+                    <Edit2 className="h-4 w-4 mr-1" />
+                    Edit
+                  </Button>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {isEditingItem ? (
+                <>
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground">Category</Label>
+                    <div className="flex gap-2">
+                      <Button
+                        variant={category === "Pizza" ? "default" : "outline"}
+                        className="flex-1"
+                        onClick={() => {
+                          setCategory("Pizza");
+                          setProductName(pizzaOptions[0]);
+                        }}
+                      >
+                        🍕 Pizza
+                      </Button>
+                      <Button
+                        variant={category === "Side" ? "default" : "outline"}
+                        className="flex-1"
+                        onClick={() => {
+                          setCategory("Side");
+                          setProductName(sideOptions[0]);
+                        }}
+                      >
+                        🍗 Side
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground">Product Name</Label>
+                    <Select value={productName} onValueChange={setProductName}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(category === "Pizza" ? pizzaOptions : sideOptions).map((option) => (
+                          <SelectItem key={option} value={option}>
+                            {option}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full"
+                    onClick={() => setIsEditingItem(false)}
+                  >
+                    Done
+                  </Button>
+                </>
+              ) : (
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Category</span>
+                    <Badge variant="secondary">{category}</Badge>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Product</span>
+                    <span className="font-medium">{productName}</span>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Image Info */}
           <Card>
             <CardHeader className="pb-3">
@@ -325,16 +417,12 @@ export default function QualityScoring() {
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Pizza ID</span>
+                <span className="text-muted-foreground">Image ID</span>
                 <span className="font-mono">{mockPizza.id}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Store</span>
                 <span>#{mockPizza.storeId}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Type</span>
-                <span>{mockPizza.type}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Captured</span>

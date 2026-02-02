@@ -179,15 +179,30 @@ export default function UploadRate() {
     return "bg-destructive";
   };
 
+  const hasImages = uploadedImages.length > 0;
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Upload & Rate</h1>
-          <p className="mt-1 text-muted-foreground">
-            Upload photos for model prediction and quality scoring
-          </p>
+        <div className="flex items-center gap-4">
+          {hasImages && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fileInputRef.current?.click()}
+              className="gap-2"
+            >
+              <Upload className="h-4 w-4" />
+              Add More
+            </Button>
+          )}
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Upload & Rate</h1>
+            <p className="mt-1 text-muted-foreground">
+              Upload photos for model prediction and quality scoring
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
@@ -200,7 +215,7 @@ export default function UploadRate() {
               onCheckedChange={setEnableScoring}
             />
           </div>
-          {uploadedImages.length > 0 && (
+          {hasImages && (
             <Button onClick={() => console.log("Submitting:", uploadedImages)}>
               <Save className="mr-2 h-4 w-4" />
               Submit All ({uploadedImages.length})
@@ -209,58 +224,72 @@ export default function UploadRate() {
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Upload Images</CardTitle>
-          <CardDescription>Drag & drop or click to upload single or batch photos</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-        {/* Drop Zone */}
-        <div
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        className="hidden"
+        onChange={(e) => handleFiles(e.target.files)}
+      />
+
+      {/* Empty State - Full Drop Zone */}
+      {!hasImages && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Upload Images</CardTitle>
+            <CardDescription>Drag & drop or click to upload single or batch photos</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onClick={() => fileInputRef.current?.click()}
+              className={cn(
+                "flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-16 transition-colors cursor-pointer",
+                isDragging
+                  ? "border-primary bg-primary/5"
+                  : "border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/50"
+              )}
+            >
+              <Upload className="h-12 w-12 text-muted-foreground" />
+              <p className="text-lg font-medium">Drag & drop images here</p>
+              <p className="text-sm text-muted-foreground">or click to browse</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Uploaded Images View */}
+      {hasImages && (
+        <Card
           onDrop={handleDrop}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
-          onClick={() => fileInputRef.current?.click()}
           className={cn(
-            "flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-8 transition-colors cursor-pointer",
-            isDragging
-              ? "border-primary bg-primary/5"
-              : "border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/50"
+            "transition-colors",
+            isDragging && "border-primary bg-primary/5"
           )}
         >
-          <Upload className="h-10 w-10 text-muted-foreground" />
-          <p className="text-sm font-medium">Drag & drop images here</p>
-          <p className="text-xs text-muted-foreground">or click to browse</p>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            multiple
-            className="hidden"
-            onChange={(e) => handleFiles(e.target.files)}
-          />
-        </div>
-
-        {/* Uploaded Images with Predictions */}
-        {uploadedImages.length > 0 && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <Label className="text-sm font-medium">
-                Uploaded ({uploadedImages.length})
-              </Label>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-destructive"
-                onClick={() => {
-                  uploadedImages.forEach((img) => URL.revokeObjectURL(img.preview));
-                  setUploadedImages([]);
-                }}
-              >
-                Clear All
-              </Button>
+          <CardHeader className="flex flex-row items-center justify-between pb-4">
+            <div>
+              <CardTitle>Uploaded Images ({uploadedImages.length})</CardTitle>
+              <CardDescription>Review and edit model predictions</CardDescription>
             </div>
-
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-destructive"
+              onClick={() => {
+                uploadedImages.forEach((img) => URL.revokeObjectURL(img.preview));
+                setUploadedImages([]);
+              }}
+            >
+              Clear All
+            </Button>
+          </CardHeader>
+          <CardContent>
             <div className="space-y-3">
               {uploadedImages.map((img) => (
                 <div
@@ -435,11 +464,9 @@ export default function UploadRate() {
                 </div>
               ))}
             </div>
-
-          </div>
-        )}
-      </CardContent>
-    </Card>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

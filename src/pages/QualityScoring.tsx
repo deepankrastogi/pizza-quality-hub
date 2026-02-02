@@ -11,6 +11,7 @@ import {
   Undo,
   Redo,
   Trash2,
+  X,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -52,32 +53,53 @@ const defectTypes = [
 ];
 
 export default function QualityScoring() {
-  const [scores, setScores] = useState<Record<string, number>>({
-    toppingSpread: 75,
-    cheeseSpread: 80,
-    burnScore: 85,
-    undercookedScore: 90,
-    bubbleCount: 70,
-    bubbleSize: 65,
+const [scores, setScores] = useState<Record<string, number>>({
+    toppingSpread: 7,
+    cheeseSpread: 8,
+    burnScore: 8,
+    undercookedScore: 9,
+    bubbleCount: 7,
+    bubbleSize: 6,
   });
   const [selectedTool, setSelectedTool] = useState<string>("box");
   const [selectedDefect, setSelectedDefect] = useState<string>("burnt");
-  const [annotations, setAnnotations] = useState<any[]>([]);
+  const [annotations, setAnnotations] = useState<{ id: string; defectType: string; tool: string }[]>([]);
   const [zoom, setZoom] = useState(100);
   const [zoomDialogOpen, setZoomDialogOpen] = useState(false);
 
   const overallScore = Object.values(scores).reduce((sum, score) => sum + score, 0) / 6;
 
   const getScoreColor = (score: number) => {
-    if (score >= 80) return "text-success";
-    if (score >= 60) return "text-warning";
+    if (score >= 8) return "text-success";
+    if (score >= 6) return "text-warning";
     return "text-destructive";
   };
 
   const getScoreBg = (score: number) => {
-    if (score >= 80) return "bg-success";
-    if (score >= 60) return "bg-warning";
+    if (score >= 8) return "bg-success";
+    if (score >= 6) return "bg-warning";
     return "bg-destructive";
+  };
+
+  const addAnnotation = () => {
+    const newAnnotation = {
+      id: Date.now().toString(),
+      defectType: selectedDefect,
+      tool: selectedTool,
+    };
+    setAnnotations((prev) => [...prev, newAnnotation]);
+  };
+
+  const removeAnnotation = (id: string) => {
+    setAnnotations((prev) => prev.filter((a) => a.id !== id));
+  };
+
+  const getDefectLabel = (defectId: string) => {
+    return defectTypes.find((d) => d.id === defectId)?.label || defectId;
+  };
+
+  const getDefectColor = (defectId: string) => {
+    return defectTypes.find((d) => d.id === defectId)?.color || "bg-muted";
   };
 
   const handleScoreChange = (key: string, value: number[]) => {
@@ -150,8 +172,14 @@ export default function QualityScoring() {
                     <img
                       src={mockPizza.url}
                       alt="Pizza to score"
-                      className="h-full w-full object-cover cursor-zoom-in"
-                      onClick={() => setZoomDialogOpen(true)}
+                      className="h-full w-full object-cover cursor-crosshair"
+                      onClick={(e) => {
+                        if (e.shiftKey) {
+                          setZoomDialogOpen(true);
+                        } else {
+                          addAnnotation();
+                        }
+                      }}
                     />
                   </AspectRatio>
                 </div>
@@ -217,11 +245,28 @@ export default function QualityScoring() {
               {annotations.length > 0 && (
                 <div className="mt-4 pt-4 border-t">
                   <div className="flex items-center justify-between mb-2">
-                    <Label className="text-xs text-muted-foreground">Annotations ({annotations.length})</Label>
+                    <Label className="text-xs text-muted-foreground">Marked Defects ({annotations.length})</Label>
                     <Button variant="ghost" size="sm" className="text-destructive" onClick={() => setAnnotations([])}>
                       <Trash2 className="h-3 w-3 mr-1" />
                       Clear All
                     </Button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {annotations.map((annotation) => (
+                      <Badge
+                        key={annotation.id}
+                        variant="secondary"
+                        className={cn("flex items-center gap-1 pr-1", getDefectColor(annotation.defectType), "text-white")}
+                      >
+                        {getDefectLabel(annotation.defectType)}
+                        <button
+                          onClick={() => removeAnnotation(annotation.id)}
+                          className="ml-1 rounded-full hover:bg-white/20 p-0.5"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
                   </div>
                 </div>
               )}
@@ -238,10 +283,11 @@ export default function QualityScoring() {
               <p className={cn("text-5xl font-bold", getScoreColor(overallScore))}>
                 {overallScore.toFixed(1)}
               </p>
+              <p className="text-xs text-muted-foreground mt-1">out of 10</p>
               <div className="mt-4 h-3 w-full rounded-full bg-secondary overflow-hidden">
                 <div
                   className={cn("h-full transition-all", getScoreBg(overallScore))}
-                  style={{ width: `${overallScore}%` }}
+                  style={{ width: `${(overallScore / 10) * 100}%` }}
                 />
               </div>
             </CardContent>
@@ -251,7 +297,7 @@ export default function QualityScoring() {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-lg">Scoring Parameters</CardTitle>
-              <CardDescription>Rate each parameter from 0-100</CardDescription>
+              <CardDescription>Rate each parameter from 0-10 (10 = best)</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               {scoringParameters.map((param) => (
@@ -265,12 +311,12 @@ export default function QualityScoring() {
                       <Input
                         type="number"
                         min={0}
-                        max={100}
+                        max={10}
                         value={scores[param.key]}
                         onChange={(e) =>
                           setScores((prev) => ({
                             ...prev,
-                            [param.key]: Math.max(0, Math.min(100, parseInt(e.target.value) || 0)),
+                            [param.key]: Math.max(0, Math.min(10, parseInt(e.target.value) || 0)),
                           }))
                         }
                         className="w-16 text-center"
@@ -280,7 +326,7 @@ export default function QualityScoring() {
                   <Slider
                     value={[scores[param.key]]}
                     onValueChange={(v) => handleScoreChange(param.key, v)}
-                    max={100}
+                    max={10}
                     step={1}
                     className="w-full"
                   />

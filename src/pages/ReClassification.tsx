@@ -14,7 +14,7 @@ import {
   Redo,
   Trash2,
   SkipForward,
-  Edit3,
+  Edit2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -81,7 +81,8 @@ export default function ReClassification() {
 
   // Edit mode state
   const [isEditing, setIsEditing] = useState(false);
-  const [editCategory, setEditCategory] = useState<"pizza" | "side">("pizza");
+  const [isEditingClassification, setIsEditingClassification] = useState(false);
+  const [editCategory, setEditCategory] = useState<"Pizza" | "Side">("Pizza");
   const [editProductName, setEditProductName] = useState("");
   const [scores, setScores] = useState<Record<string, number>>({
     toppingSpread: 7,
@@ -104,6 +105,7 @@ export default function ReClassification() {
 
   const resetEditState = () => {
     setIsEditing(false);
+    setIsEditingClassification(false);
     setAnnotations([]);
     setScores({
       toppingSpread: 7,
@@ -123,7 +125,7 @@ export default function ReClassification() {
 
   const handleStartEdit = () => {
     setIsEditing(true);
-    setEditCategory(currentImage.category as "pizza" | "side");
+    setEditCategory(currentImage.category === "pizza" ? "Pizza" : "Side");
     setEditProductName(currentImage.productName);
   };
 
@@ -185,7 +187,7 @@ export default function ReClassification() {
     return "bg-destructive";
   };
 
-  const productOptions = editCategory === "pizza" ? pizzaOptions : sideOptions;
+  const productOptions = editCategory === "Pizza" ? pizzaOptions : sideOptions;
 
   if (!currentImage) {
     return (
@@ -452,61 +454,90 @@ export default function ReClassification() {
                   className="h-14 w-full text-lg border-warning text-warning hover:bg-warning hover:text-warning-foreground"
                   size="lg"
                 >
-                  <Edit3 className="mr-2 h-6 w-6" />
+                  <Edit2 className="mr-2 h-6 w-6" />
                   Make Corrections
                 </Button>
               </CardContent>
             </Card>
           ) : (
             <>
-              {/* Edit Classification */}
-              <Card className="border-2 border-warning">
+              {/* Item Classification - Matching Quality Scoring UI */}
+              <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-lg">Correct Classification</CardTitle>
-                  <CardDescription>Update category and product name</CardDescription>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg">Item Classification</CardTitle>
+                    {!isEditingClassification && (
+                      <Button variant="ghost" size="sm" onClick={() => setIsEditingClassification(true)}>
+                        <Edit2 className="h-4 w-4 mr-1" />
+                        Edit
+                      </Button>
+                    )}
+                  </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Category</Label>
-                    <div className="flex gap-2">
-                      <Button
-                        variant={editCategory === "pizza" ? "default" : "outline"}
-                        className="flex-1"
-                        onClick={() => {
-                          setEditCategory("pizza");
-                          setEditProductName(pizzaOptions[0]);
-                        }}
+                  {isEditingClassification ? (
+                    <>
+                      <div className="space-y-2">
+                        <Label className="text-xs text-muted-foreground">Category</Label>
+                        <div className="flex gap-2">
+                          <Button
+                            variant={editCategory === "Pizza" ? "default" : "outline"}
+                            className="flex-1"
+                            onClick={() => {
+                              setEditCategory("Pizza");
+                              setEditProductName(pizzaOptions[0]);
+                            }}
+                          >
+                            🍕 Pizza
+                          </Button>
+                          <Button
+                            variant={editCategory === "Side" ? "default" : "outline"}
+                            className="flex-1"
+                            onClick={() => {
+                              setEditCategory("Side");
+                              setEditProductName(sideOptions[0]);
+                            }}
+                          >
+                            🍗 Side
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs text-muted-foreground">Product Name</Label>
+                        <Select value={editProductName} onValueChange={setEditProductName}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {productOptions.map((option) => (
+                              <SelectItem key={option} value={option}>
+                                {option}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="w-full"
+                        onClick={() => setIsEditingClassification(false)}
                       >
-                        Pizza
+                        Done
                       </Button>
-                      <Button
-                        variant={editCategory === "side" ? "default" : "outline"}
-                        className="flex-1"
-                        onClick={() => {
-                          setEditCategory("side");
-                          setEditProductName(sideOptions[0]);
-                        }}
-                      >
-                        Side
-                      </Button>
+                    </>
+                  ) : (
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Category</span>
+                        <Badge variant="secondary">{editCategory}</Badge>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Product</span>
+                        <span className="font-medium">{editProductName}</span>
+                      </div>
                     </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Product Name</Label>
-                    <Select value={editProductName} onValueChange={setEditProductName}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select product" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {productOptions.map((option) => (
-                          <SelectItem key={option} value={option}>
-                            {option}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  )}
                 </CardContent>
               </Card>
 

@@ -1,10 +1,29 @@
 import { useState } from "react";
-import { Check, X, AlertTriangle, Filter, ChevronDown } from "lucide-react";
+import {
+  Check,
+  X,
+  AlertTriangle,
+  Filter,
+  ChevronDown,
+  ZoomIn,
+  ZoomOut,
+  RotateCcw,
+  Square,
+  Pencil,
+  MapPin,
+  Undo,
+  Redo,
+  Trash2,
+  SkipForward,
+  Save,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { AspectRatio } from "@/components/ui/aspect-ratio";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,14 +38,24 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ImageZoomDialog } from "@/components/ImageZoomDialog";
+import { AnnotationCanvas, type Annotation } from "@/components/AnnotationCanvas";
+import { cn } from "@/lib/utils";
 
 // Mock data for model predictions
 const mockPredictions = [
-  { id: "1", url: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600", prediction: "pizza", confidence: 0.94 },
-  { id: "2", url: "https://images.unsplash.com/photo-1528137871618-79d2761e3fd5?w=600", prediction: "side", confidence: 0.67 },
-  { id: "3", url: "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=600", prediction: "pizza", confidence: 0.82 },
-  { id: "4", url: "https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?w=600", prediction: "pizza", confidence: 0.51 },
-  { id: "5", url: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=600", prediction: "side", confidence: 0.73 },
+  { id: "1", url: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600", prediction: "pizza", confidence: 0.94, storeId: "1234", timestamp: "2024-01-15 10:23:45", type: "Pepperoni" },
+  { id: "2", url: "https://images.unsplash.com/photo-1528137871618-79d2761e3fd5?w=600", prediction: "side", confidence: 0.67, storeId: "1235", timestamp: "2024-01-15 10:25:12", type: "Garlic Bread" },
+  { id: "3", url: "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=600", prediction: "pizza", confidence: 0.82, storeId: "1236", timestamp: "2024-01-15 10:27:33", type: "Margherita" },
+  { id: "4", url: "https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?w=600", prediction: "pizza", confidence: 0.51, storeId: "1237", timestamp: "2024-01-15 10:30:45", type: "Supreme" },
+  { id: "5", url: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=600", prediction: "side", confidence: 0.73, storeId: "1238", timestamp: "2024-01-15 10:32:18", type: "Wings" },
+];
+
+const defectTypes = [
+  { id: "burnt", label: "Burnt Area", color: "bg-destructive" },
+  { id: "undercooked", label: "Undercooked", color: "bg-warning" },
+  { id: "missing_topping", label: "Missing Topping", color: "bg-accent" },
+  { id: "uneven_cheese", label: "Uneven Cheese", color: "bg-primary" },
+  { id: "bubble_defect", label: "Bubble Defect", color: "bg-muted-foreground" },
 ];
 
 export default function ReClassification() {
@@ -34,7 +63,13 @@ export default function ReClassification() {
   const [confirmed, setConfirmed] = useState(0);
   const [corrected, setCorrected] = useState(0);
   const [filter, setFilter] = useState<string>("all");
-  const [zoomOpen, setZoomOpen] = useState(false);
+  const [zoomDialogOpen, setZoomDialogOpen] = useState(false);
+
+  // Annotation state
+  const [selectedTool, setSelectedTool] = useState<"box" | "polygon" | "point">("box");
+  const [selectedDefect, setSelectedDefect] = useState<string>("burnt");
+  const [annotations, setAnnotations] = useState<Annotation[]>([]);
+  const [zoom, setZoom] = useState(100);
 
   const filteredPredictions = mockPredictions.filter((pred) => {
     if (filter === "low") return pred.confidence < 0.7;
@@ -49,11 +84,18 @@ export default function ReClassification() {
   const handleConfirm = () => {
     setConfirmed((prev) => prev + 1);
     setCurrentIndex((prev) => prev + 1);
+    setAnnotations([]); // Clear annotations for next image
   };
 
   const handleCorrect = (newType: string) => {
     setCorrected((prev) => prev + 1);
     setCurrentIndex((prev) => prev + 1);
+    setAnnotations([]); // Clear annotations for next image
+  };
+
+  const handleSkip = () => {
+    setCurrentIndex((prev) => prev + 1);
+    setAnnotations([]);
   };
 
   const getConfidenceColor = (confidence: number) => {
@@ -66,6 +108,18 @@ export default function ReClassification() {
     if (confidence >= 0.9) return "bg-success/10 text-success";
     if (confidence >= 0.7) return "bg-warning/10 text-warning";
     return "bg-destructive/10 text-destructive";
+  };
+
+  const removeAnnotation = (id: string) => {
+    setAnnotations((prev) => prev.filter((a) => a.id !== id));
+  };
+
+  const getDefectLabel = (defectId: string) => {
+    return defectTypes.find((d) => d.id === defectId)?.label || defectId;
+  };
+
+  const getDefectColor = (defectId: string) => {
+    return defectTypes.find((d) => d.id === defectId)?.color || "bg-muted";
   };
 
   if (!currentImage) {
@@ -87,9 +141,9 @@ export default function ReClassification() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Re-Classification Review</h1>
+          <h1 className="text-3xl font-bold text-foreground">Review Model Scores</h1>
           <p className="mt-1 text-muted-foreground">
-            Confirm or correct model predictions
+            Confirm or correct model predictions and annotate defects
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -105,6 +159,10 @@ export default function ReClassification() {
               <SelectItem value="high">High (&gt;90%)</SelectItem>
             </SelectContent>
           </Select>
+          <Button variant="outline" onClick={handleSkip}>
+            <SkipForward className="mr-2 h-4 w-4" />
+            Skip
+          </Button>
         </div>
       </div>
 
@@ -142,27 +200,135 @@ export default function ReClassification() {
       </div>
 
       {/* Main Review Area */}
-      <div className="grid gap-6 lg:grid-cols-[1fr_350px]">
-        {/* Image Display */}
-        <Card className="overflow-hidden">
-          <CardContent className="p-0">
-            <AspectRatio ratio={4 / 3}>
-              <img
-                src={currentImage.url}
-                alt="Image to review"
-                className="h-full w-full object-cover cursor-zoom-in"
-                onClick={() => setZoomOpen(true)}
+      <div className="grid gap-6 xl:grid-cols-[1fr_400px]">
+        {/* Image and Annotation Area */}
+        <div className="space-y-4">
+          <Card className="overflow-hidden">
+            <CardHeader className="border-b p-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Button variant="ghost" size="icon" onClick={() => setZoom((z) => Math.max(50, z - 10))}>
+                    <ZoomOut className="h-4 w-4" />
+                  </Button>
+                  <span className="text-sm font-medium">{zoom}%</span>
+                  <Button variant="ghost" size="icon" onClick={() => setZoom((z) => Math.min(200, z + 10))}>
+                    <ZoomIn className="h-4 w-4" />
+                  </Button>
+                  <Separator orientation="vertical" className="h-6 mx-2" />
+                  <Button variant="ghost" size="icon" onClick={() => setZoom(100)}>
+                    <RotateCcw className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button variant="ghost" size="icon">
+                    <Undo className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon">
+                    <Redo className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              <AnnotationCanvas
+                imageUrl={currentImage.url}
+                selectedTool={selectedTool}
+                selectedDefect={selectedDefect}
+                defectColor={getDefectColor(selectedDefect)}
+                annotations={annotations}
+                onAnnotationsChange={setAnnotations}
+                zoom={zoom}
+                onZoomClick={() => setZoomDialogOpen(true)}
               />
-            </AspectRatio>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <ImageZoomDialog
-          open={zoomOpen}
-          onOpenChange={setZoomOpen}
-          imageUrl={currentImage.url}
-          alt="Image to review"
-        />
+          <ImageZoomDialog
+            open={zoomDialogOpen}
+            onOpenChange={setZoomDialogOpen}
+            imageUrl={currentImage.url}
+            alt="Image to review"
+          />
+
+          {/* Annotation Toolbar */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">Annotation Tools</CardTitle>
+              <CardDescription>Mark defect areas on the image</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap items-center gap-4">
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-2 block">Tool</Label>
+                  <ToggleGroup type="single" value={selectedTool} onValueChange={(v) => v && setSelectedTool(v as "box" | "polygon" | "point")}>
+                    <ToggleGroupItem value="box" aria-label="Bounding Box">
+                      <Square className="h-4 w-4 mr-2" />
+                      Box
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="polygon" aria-label="Polygon">
+                      <Pencil className="h-4 w-4 mr-2" />
+                      Polygon
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="point" aria-label="Point">
+                      <MapPin className="h-4 w-4 mr-2" />
+                      Point
+                    </ToggleGroupItem>
+                  </ToggleGroup>
+                </div>
+
+                <Separator orientation="vertical" className="h-10" />
+
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-2 block">Defect Type</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {defectTypes.map((defect) => (
+                      <Badge
+                        key={defect.id}
+                        variant={selectedDefect === defect.id ? "default" : "outline"}
+                        className={cn(
+                          "cursor-pointer transition-all",
+                          selectedDefect === defect.id && defect.color
+                        )}
+                        onClick={() => setSelectedDefect(defect.id)}
+                      >
+                        {defect.label}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {annotations.length > 0 && (
+                <div className="mt-4 pt-4 border-t">
+                  <div className="flex items-center justify-between mb-2">
+                    <Label className="text-xs text-muted-foreground">Marked Defects ({annotations.length})</Label>
+                    <Button variant="ghost" size="sm" className="text-destructive" onClick={() => setAnnotations([])}>
+                      <Trash2 className="h-3 w-3 mr-1" />
+                      Clear All
+                    </Button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {annotations.map((annotation) => (
+                      <Badge
+                        key={annotation.id}
+                        variant="secondary"
+                        className={cn("flex items-center gap-1 pr-1", getDefectColor(annotation.defectType), "text-white")}
+                      >
+                        {getDefectLabel(annotation.defectType)}
+                        <button
+                          onClick={() => removeAnnotation(annotation.id)}
+                          className="ml-1 rounded-full hover:bg-white/20 p-0.5"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Review Panel */}
         <div className="space-y-4">
@@ -240,6 +406,18 @@ export default function ReClassification() {
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Image ID</span>
                 <span className="font-mono">{currentImage.id}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Store</span>
+                <span>#{currentImage.storeId}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Type</span>
+                <span>{currentImage.type}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Captured</span>
+                <span>{currentImage.timestamp}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Position</span>

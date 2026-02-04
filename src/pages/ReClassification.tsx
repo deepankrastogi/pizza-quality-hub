@@ -40,13 +40,13 @@ import { cn } from "@/lib/utils";
 const pizzaOptions = ["Pepperoni", "Margherita", "Supreme", "BBQ Chicken", "Veggie", "Hawaiian", "Meat Lovers"];
 const sideOptions = ["Garlic Bread", "Wings", "Cheese Sticks", "Salad", "Breadsticks", "Onion Rings"];
 
-// Mock data for model predictions
+// Mock data for model predictions with scores
 const mockPredictions = [
-  { id: "1", url: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600", category: "pizza", productName: "Pepperoni", confidence: 0.94, storeId: "1234", timestamp: "2024-01-15 10:23:45" },
-  { id: "2", url: "https://images.unsplash.com/photo-1528137871618-79d2761e3fd5?w=600", category: "side", productName: "Garlic Bread", confidence: 0.67, storeId: "1235", timestamp: "2024-01-15 10:25:12" },
-  { id: "3", url: "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=600", category: "pizza", productName: "Margherita", confidence: 0.82, storeId: "1236", timestamp: "2024-01-15 10:27:33" },
-  { id: "4", url: "https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?w=600", category: "pizza", productName: "Supreme", confidence: 0.51, storeId: "1237", timestamp: "2024-01-15 10:30:45" },
-  { id: "5", url: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=600", category: "side", productName: "Wings", confidence: 0.73, storeId: "1238", timestamp: "2024-01-15 10:32:18" },
+  { id: "1", url: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600", category: "pizza", productName: "Pepperoni", confidence: 0.94, storeId: "1234", timestamp: "2024-01-15 10:23:45", scores: { toppingSpread: 8, cheeseSpread: 9, burnScore: 7, undercookedScore: 9, bubbleCount: 8, bubbleSize: 7 } },
+  { id: "2", url: "https://images.unsplash.com/photo-1528137871618-79d2761e3fd5?w=600", category: "side", productName: "Garlic Bread", confidence: 0.67, storeId: "1235", timestamp: "2024-01-15 10:25:12", scores: { toppingSpread: 6, cheeseSpread: 7, burnScore: 5, undercookedScore: 8, bubbleCount: 6, bubbleSize: 5 } },
+  { id: "3", url: "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=600", category: "pizza", productName: "Margherita", confidence: 0.82, storeId: "1236", timestamp: "2024-01-15 10:27:33", scores: { toppingSpread: 7, cheeseSpread: 8, burnScore: 8, undercookedScore: 7, bubbleCount: 7, bubbleSize: 8 } },
+  { id: "4", url: "https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?w=600", category: "pizza", productName: "Supreme", confidence: 0.51, storeId: "1237", timestamp: "2024-01-15 10:30:45", scores: { toppingSpread: 5, cheeseSpread: 4, burnScore: 6, undercookedScore: 5, bubbleCount: 4, bubbleSize: 5 } },
+  { id: "5", url: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=600", category: "side", productName: "Wings", confidence: 0.73, storeId: "1238", timestamp: "2024-01-15 10:32:18", scores: { toppingSpread: 7, cheeseSpread: 6, burnScore: 8, undercookedScore: 7, bubbleCount: 6, bubbleSize: 7 } },
 ];
 
 const defectTypes = [
@@ -127,6 +127,8 @@ export default function ReClassification() {
     setIsEditing(true);
     setEditCategory(currentImage.category === "pizza" ? "Pizza" : "Side");
     setEditProductName(currentImage.productName);
+    // Copy model's predicted scores to editable state
+    setScores({ ...currentImage.scores });
   };
 
   const handleSaveCorrection = () => {
@@ -174,6 +176,11 @@ export default function ReClassification() {
   };
 
   const overallScore = (Object.values(scores).reduce((sum, score) => sum + score, 0) / 6) * 10;
+  
+  // Model's predicted overall score (read-only display)
+  const modelOverallScore = currentImage 
+    ? (Object.values(currentImage.scores).reduce((sum, score) => sum + score, 0) / 6) * 10 
+    : 0;
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return "text-success";
@@ -402,7 +409,12 @@ export default function ReClassification() {
           {/* Model Prediction */}
           <Card className="border-2 border-primary">
             <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Model Prediction</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg">Model Prediction</CardTitle>
+                <div className={cn("text-2xl font-bold", getScoreColor(modelOverallScore))}>
+                  {modelOverallScore.toFixed(0)}/100
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -427,6 +439,44 @@ export default function ReClassification() {
                   value={currentImage.confidence * 100}
                   className="h-3"
                 />
+                
+                {/* Parameter Scores - Read Only */}
+                <Separator />
+                <div className="space-y-3">
+                  <Label className="text-xs text-muted-foreground">Parameter Scores</Label>
+                  {scoringParameters.map((param) => (
+                    <div key={param.key} className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">{param.label}</span>
+                      <div className="flex items-center gap-2">
+                        <div className="w-24 h-2 rounded-full bg-secondary overflow-hidden">
+                          <div
+                            className={cn("h-full", getScoreBg(currentImage.scores[param.key as keyof typeof currentImage.scores] * 10))}
+                            style={{ width: `${currentImage.scores[param.key as keyof typeof currentImage.scores] * 10}%` }}
+                          />
+                        </div>
+                        <span className="text-sm font-medium w-6 text-right">
+                          {currentImage.scores[param.key as keyof typeof currentImage.scores]}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                {/* Overall Score Bar */}
+                <div className="pt-3 border-t">
+                  <div className="flex items-center justify-between mb-2">
+                    <Label className="text-sm text-muted-foreground">Overall Score</Label>
+                    <span className={cn("font-bold", getScoreColor(modelOverallScore))}>
+                      {modelOverallScore.toFixed(0)}%
+                    </span>
+                  </div>
+                  <div className="h-3 w-full rounded-full bg-secondary overflow-hidden">
+                    <div
+                      className={cn("h-full transition-all", getScoreBg(modelOverallScore))}
+                      style={{ width: `${modelOverallScore}%` }}
+                    />
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>

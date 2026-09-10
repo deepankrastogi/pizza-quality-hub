@@ -114,6 +114,7 @@ export default function InferenceTester() {
   const [urlInput, setUrlInput] = useState("");
   const [isRunning, setIsRunning] = useState(false);
   const [result, setResult] = useState<InferenceResult | null>(null);
+  const [forceNonPizza, setForceNonPizza] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const runInference = (src: string) => {
@@ -122,7 +123,7 @@ export default function InferenceTester() {
     setResult(null);
     // Simulate model latency
     setTimeout(() => {
-      setResult(runMockInference(src));
+      setResult(runMockInference(src, forceNonPizza));
       setIsRunning(false);
       toast.success("Inference complete");
     }, 1500);

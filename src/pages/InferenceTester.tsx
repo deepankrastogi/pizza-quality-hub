@@ -248,9 +248,15 @@ export default function InferenceTester() {
                     label="Pizza Name"
                     value={result.itemName}
                     confidence={result.itemNameConfidence}
+                    beta
                   />
                   <div className="flex items-center justify-between py-3">
-                    <span className="text-sm text-muted-foreground">Recaptured Image</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground">Recaptured Image</span>
+                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                        Beta
+                      </Badge>
+                    </div>
                     <div className="flex items-center gap-2">
                       <Badge
                         variant={result.isRecaptured ? "destructive" : "secondary"}

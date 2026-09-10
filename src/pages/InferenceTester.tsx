@@ -278,46 +278,61 @@ export default function InferenceTester() {
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle>Score Details</CardTitle>
-                    <CardDescription>Parameter-wise quality scores</CardDescription>
+                    <CardDescription>
+                      {result.itemType === "Pizza"
+                        ? "Parameter-wise quality scores"
+                        : "Quality scoring is only available for pizzas"}
+                    </CardDescription>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm text-muted-foreground">Overall Score</p>
-                    <p
-                      className={`text-3xl font-bold ${
-                        result.overallScore >= 80
-                          ? "text-success"
-                          : result.overallScore >= 60
-                            ? "text-warning"
-                            : "text-destructive"
-                      }`}
-                    >
-                      {result.overallScore}
-                      <span className="text-base text-muted-foreground">/100</span>
-                    </p>
-                  </div>
+                  {result.itemType === "Pizza" && (
+                    <div className="text-right">
+                      <p className="text-sm text-muted-foreground">Overall Score</p>
+                      <p
+                        className={`text-3xl font-bold ${
+                          result.overallScore >= 80
+                            ? "text-success"
+                            : result.overallScore >= 60
+                              ? "text-warning"
+                              : "text-destructive"
+                        }`}
+                      >
+                        {result.overallScore}
+                        <span className="text-base text-muted-foreground">/100</span>
+                      </p>
+                    </div>
+                  )}
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex justify-center">
-                  <img
-                    src={result.imageUrl}
-                    alt="Scored pizza"
-                    className="h-44 w-44 rounded-lg object-cover shadow-md"
-                  />
-                </div>
-                <div className="space-y-3">
-                  {result.params.map((param) => (
-                    <div key={param.name}>
-                      <div className="mb-1 flex items-center justify-between text-sm">
-                        <span>{param.name}</span>
-                        <span className={`font-semibold ${paramColor(param.score)}`}>
-                          {param.score}/10
-                        </span>
-                      </div>
-                      <Progress value={param.score * 10} className="h-2" />
+                {result.itemType === "Pizza" ? (
+                  <>
+                    <div className="flex justify-center">
+                      <img
+                        src={result.imageUrl}
+                        alt="Scored pizza"
+                        className="h-44 w-44 rounded-lg object-cover shadow-md"
+                      />
                     </div>
-                  ))}
-                </div>
+                    <div className="space-y-3">
+                      {result.params.map((param) => (
+                        <div key={param.name}>
+                          <div className="mb-1 flex items-center justify-between text-sm">
+                            <span>{param.name}</span>
+                            <span className={`font-semibold ${paramColor(param.score)}`}>
+                              {param.score}/10
+                            </span>
+                          </div>
+                          <Progress value={param.score * 10} className="h-2" />
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border p-10 text-center text-muted-foreground">
+                    <ImageIcon className="h-10 w-10" />
+                    <p>Upload a pizza image to get quality score details.</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

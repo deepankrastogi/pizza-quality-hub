@@ -224,7 +224,17 @@ export default function InferenceTester() {
       {/* Results */}
       {result && !isRunning && (
         <div className="space-y-4">
-          <div className="flex justify-end">
+          <div className="flex items-center justify-end gap-4">
+            <div className="flex items-center gap-2">
+              <Switch
+                id="non-pizza-toggle"
+                checked={forceNonPizza}
+                onCheckedChange={setForceNonPizza}
+              />
+              <Label htmlFor="non-pizza-toggle" className="text-sm text-muted-foreground">
+                Simulate non-pizza
+              </Label>
+            </div>
             <Button variant="outline" size="sm" onClick={() => runInference(result.imageUrl)}>
               <RefreshCcw className="mr-2 h-4 w-4" /> Re-run Inference
             </Button>

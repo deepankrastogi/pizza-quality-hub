@@ -68,10 +68,27 @@ function ConfidenceBadge({ value }: { value: number }) {
   );
 }
 
-function DetailRow({ label, value, confidence }: { label: string; value: string; confidence?: number }) {
+function DetailRow({
+  label,
+  value,
+  confidence,
+  beta,
+}: {
+  label: string;
+  value: string;
+  confidence?: number;
+  beta?: boolean;
+}) {
   return (
     <div className="flex items-center justify-between border-b border-border py-3 last:border-0">
-      <span className="text-sm text-muted-foreground">{label}</span>
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-muted-foreground">{label}</span>
+        {beta && (
+          <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+            Beta
+          </Badge>
+        )}
+      </div>
       <div className="flex items-center gap-2">
         <span className="font-medium">{value}</span>
         {confidence !== undefined && <ConfidenceBadge value={confidence} />}

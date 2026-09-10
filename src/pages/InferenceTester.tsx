@@ -12,6 +12,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 
 interface InferenceResult {
@@ -37,15 +39,19 @@ const scoreParams = [
 
 const randomParam = () => Math.round((5 + Math.random() * 5) * 10) / 10;
 
-function runMockInference(imageUrl: string): InferenceResult {
+function runMockInference(imageUrl: string, forceNonPizza = false): InferenceResult {
   const params = scoreParams.map((name) => ({ name, score: randomParam() }));
   const overall = Math.round((params.reduce((s, p) => s + p.score, 0) / params.length) * 10);
-  const names = ["Peppy Paneer", "Farmhouse", "Margherita", "Cheese & Corn", "Deluxe Veggie"];
+  const pizzaNames = ["Peppy Paneer", "Farmhouse", "Margherita", "Cheese & Corn", "Deluxe Veggie"];
+  const sideNames = ["Garlic Bread", "Stuffed Garlic Bread", "Potato Wedges", "Pasta Italiano"];
+  const isPizza = !forceNonPizza;
   return {
     imageUrl,
-    itemType: "Pizza",
+    itemType: isPizza ? "Pizza" : "Side",
     itemTypeConfidence: 90 + Math.round(Math.random() * 9 * 10) / 10,
-    itemName: names[Math.floor(Math.random() * names.length)],
+    itemName: isPizza
+      ? pizzaNames[Math.floor(Math.random() * pizzaNames.length)]
+      : sideNames[Math.floor(Math.random() * sideNames.length)],
     itemNameConfidence: 80 + Math.round(Math.random() * 18 * 10) / 10,
     isRecaptured: Math.random() < 0.3,
     recaptureConfidence: 75 + Math.round(Math.random() * 23 * 10) / 10,
@@ -108,6 +114,7 @@ export default function InferenceTester() {
   const [urlInput, setUrlInput] = useState("");
   const [isRunning, setIsRunning] = useState(false);
   const [result, setResult] = useState<InferenceResult | null>(null);
+  const [forceNonPizza, setForceNonPizza] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const runInference = (src: string) => {
@@ -116,7 +123,7 @@ export default function InferenceTester() {
     setResult(null);
     // Simulate model latency
     setTimeout(() => {
-      setResult(runMockInference(src));
+      setResult(runMockInference(src, forceNonPizza));
       setIsRunning(false);
       toast.success("Inference complete");
     }, 1500);
@@ -217,7 +224,17 @@ export default function InferenceTester() {
       {/* Results */}
       {result && !isRunning && (
         <div className="space-y-4">
-          <div className="flex justify-end">
+          <div className="flex items-center justify-end gap-4">
+            <div className="flex items-center gap-2">
+              <Switch
+                id="non-pizza-toggle"
+                checked={forceNonPizza}
+                onCheckedChange={setForceNonPizza}
+              />
+              <Label htmlFor="non-pizza-toggle" className="text-sm text-muted-foreground">
+                Simulate non-pizza
+              </Label>
+            </div>
             <Button variant="outline" size="sm" onClick={() => runInference(result.imageUrl)}>
               <RefreshCcw className="mr-2 h-4 w-4" /> Re-run Inference
             </Button>

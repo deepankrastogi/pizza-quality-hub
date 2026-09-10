@@ -12,6 +12,7 @@ import UploadRate from "./pages/UploadRate";
 import BrowseImages from "./pages/BrowseImages";
 import QualityAnalytics from "./pages/QualityAnalytics";
 import TrainingAnalytics from "./pages/TrainingAnalytics";
+import InferenceTester from "./pages/InferenceTester";
 import UserManagement from "./pages/UserManagement";
 import NotFound from "./pages/NotFound";
 
@@ -69,6 +70,14 @@ const App = () => (
             element={
               <AppLayout>
                 <BrowseImages />
+              </AppLayout>
+            }
+          />
+          <Route
+            path="/inference"
+            element={
+              <AppLayout>
+                <InferenceTester />
               </AppLayout>
             }
           />

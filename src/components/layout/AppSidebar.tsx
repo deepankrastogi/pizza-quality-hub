@@ -13,6 +13,7 @@ import {
   ChevronRight,
   Pizza,
   Upload,
+  FlaskConical,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import {
@@ -41,6 +42,10 @@ const workflowItems = [
   { title: "Quality Scoring", url: "/scoring", icon: Star },
   { title: "Review Model Scores", url: "/reclassify", icon: RefreshCw },
   { title: "Browse Images", url: "/browse", icon: FolderOpen },
+];
+
+const toolsItems = [
+  { title: "Inference Tester", url: "/inference", icon: FlaskConical },
 ];
 
 const analyticsItems = [

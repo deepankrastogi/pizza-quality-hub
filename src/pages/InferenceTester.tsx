@@ -94,7 +94,7 @@ function DetailRow({
       </div>
       <div className="flex items-center gap-2">
         <span className="font-medium">{value}</span>
-        {confidence !== undefined && <ConfidenceBadge value={confidence} />}
+        {confidence !== undefined && value !== "N/A" && <ConfidenceBadge value={confidence} />}
       </div>
     </div>
   );

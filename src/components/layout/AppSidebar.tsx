@@ -138,6 +138,15 @@ export function AppSidebar() {
         <SidebarGroup className="mt-4">
           {!collapsed && (
             <SidebarGroupLabel className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/50">
+              Tools
+            </SidebarGroupLabel>
+          )}
+          <SidebarGroupContent>{renderNavItems(toolsItems)}</SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup className="mt-4">
+          {!collapsed && (
+            <SidebarGroupLabel className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/50">
               Analytics
             </SidebarGroupLabel>
           )}

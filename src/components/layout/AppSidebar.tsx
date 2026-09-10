@@ -13,6 +13,7 @@ import {
   ChevronRight,
   Pizza,
   Upload,
+  FlaskConical,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import {
@@ -41,6 +42,10 @@ const workflowItems = [
   { title: "Quality Scoring", url: "/scoring", icon: Star },
   { title: "Review Model Scores", url: "/reclassify", icon: RefreshCw },
   { title: "Browse Images", url: "/browse", icon: FolderOpen },
+];
+
+const toolsItems = [
+  { title: "Inference Tester", url: "/inference", icon: FlaskConical },
 ];
 
 const analyticsItems = [
@@ -128,6 +133,15 @@ export function AppSidebar() {
             </SidebarGroupLabel>
           )}
           <SidebarGroupContent>{renderNavItems(workflowItems)}</SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup className="mt-4">
+          {!collapsed && (
+            <SidebarGroupLabel className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/50">
+              Tools
+            </SidebarGroupLabel>
+          )}
+          <SidebarGroupContent>{renderNavItems(toolsItems)}</SidebarGroupContent>
         </SidebarGroup>
 
         <SidebarGroup className="mt-4">

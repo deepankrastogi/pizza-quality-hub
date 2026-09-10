@@ -43,16 +43,13 @@ function runMockInference(imageUrl: string, forceNonPizza = false): InferenceRes
   const params = scoreParams.map((name) => ({ name, score: randomParam() }));
   const overall = Math.round((params.reduce((s, p) => s + p.score, 0) / params.length) * 10);
   const pizzaNames = ["Peppy Paneer", "Farmhouse", "Margherita", "Cheese & Corn", "Deluxe Veggie"];
-  const sideNames = ["Garlic Bread", "Stuffed Garlic Bread", "Potato Wedges", "Pasta Italiano"];
   const isPizza = !forceNonPizza;
   return {
     imageUrl,
     itemType: isPizza ? "Pizza" : "Side",
     itemTypeConfidence: 90 + Math.round(Math.random() * 9 * 10) / 10,
-    itemName: isPizza
-      ? pizzaNames[Math.floor(Math.random() * pizzaNames.length)]
-      : sideNames[Math.floor(Math.random() * sideNames.length)],
-    itemNameConfidence: 80 + Math.round(Math.random() * 18 * 10) / 10,
+    itemName: isPizza ? pizzaNames[Math.floor(Math.random() * pizzaNames.length)] : "N/A",
+    itemNameConfidence: isPizza ? 80 + Math.round(Math.random() * 18 * 10) / 10 : 0,
     isRecaptured: Math.random() < 0.3,
     recaptureConfidence: 75 + Math.round(Math.random() * 23 * 10) / 10,
     overallScore: overall,
